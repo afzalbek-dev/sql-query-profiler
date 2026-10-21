@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sql-query-profiler"
+version = "0.1.0"
+description = "Non-intrusive SQL query performance profiler and anti-pattern detector (N+1 queries, unindexed filters, cartesian joins) for Python ORMs."
+readme = "README.md"
+authors = [{ name = "Afzalbek", email = "afzalbek-dev@users.noreply.github.com" }]
+license = { text = "MIT" }
+requires-python = ">=3.9"
+
+[tool.setuptools.packages.find]
+where = ["src"]
