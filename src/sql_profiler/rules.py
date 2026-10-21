@@ -31,7 +31,7 @@ class SelectStarRule(AntiPatternRule):
 
     def check(self, sql: str) -> Optional[str]:
         cleaned = re.sub(r"\s+", " ", sql.strip())
-        if re.search(r"\bSELECT\s+\*\s+FROM\b", cleaned, re.IGNORECASE):
+        if re.search(r"\bSELECT\s+(DISTINCT\s+)?(\w+\.)?\*\s+FROM\b", cleaned, re.IGNORECASE):
             return "Avoid 'SELECT *'; specify only the needed columns."
         return None
 
@@ -46,8 +46,9 @@ class MissingLimitRule(AntiPatternRule):
         )
 
     def check(self, sql: str) -> Optional[str]:
-        cleaned = sql.strip().upper()
-        if cleaned.startswith("SELECT") and "COUNT(" not in cleaned and "LIMIT" not in cleaned and "TOP " not in cleaned:
+        cleaned = re.sub(r"/\*.*?\*/", "", sql, flags=re.DOTALL)
+        cleaned = re.sub(r"--[^\n]*", "", cleaned).strip().upper()
+        if cleaned.startswith("SELECT") and "COUNT(" not in cleaned and "LIMIT" not in cleaned and "TOP " not in cleaned and "FETCH FIRST" not in cleaned:
             return "Query has no LIMIT clause. Large result sets may exhaust server memory."
         return None
 
@@ -77,8 +78,10 @@ class DangerousMutationRule(AntiPatternRule):
         )
 
     def check(self, sql: str) -> Optional[str]:
-        cleaned = sql.strip().upper()
-        if (cleaned.startswith("UPDATE") or cleaned.startswith("DELETE")) and "WHERE" not in cleaned:
+        cleaned = re.sub(r"/\*.*?\*/", "", sql, flags=re.DOTALL)
+        cleaned = re.sub(r"--[^\n]*", "", cleaned)
+        cleaned = re.sub(r"\s+", " ", cleaned).strip().upper()
+        if (cleaned.startswith("UPDATE ") or cleaned.startswith("DELETE ")) and " WHERE " not in cleaned:
             return "Catastrophic query: Missing WHERE clause will update/delete all rows in the table."
         return None
 
